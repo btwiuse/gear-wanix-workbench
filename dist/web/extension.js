@@ -4455,6 +4455,9 @@ async function createTerminal(fsys, config) {
   const taskID = (await fsys.readText(`${config.ns?.task}/new/${config.shell?.type || "auto"}`)).trim();
   const taskPath = [config.ns?.task, taskID].join("/");
   await fsys.writeFile(`${taskPath}/cmd`, config.shell?.cmd);
+  if (config.shell?.env) {
+    await fsys.writeFile(`${taskPath}/env`, config.shell.env);
+  }
   if (config.shell?.wd) {
     await fsys.writeFile(`${taskPath}/dir`, config.shell.wd);
   }
