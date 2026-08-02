@@ -4474,10 +4474,12 @@ async function createTerminal(fsys, config) {
   const common = commonPath(termPath, taskPath);
   const termPathInner = common.length > 0 ? termPath.slice(common.length + 1) : termPath;
   const taskPathInner = common.length > 0 ? taskPath.slice(common.length + 1) : taskPath;
+  await fsys.writeFile(`${taskPath}/ctl`, `bind ${taskPathInner} #task/self`);
+  await fsys.writeFile(`${taskPath}/ctl`, `bind ${termPathInner} #task/self/term`);
   await fsys.writeFile(`${taskPath}/ctl`, `bind ${termPathInner}/program ${taskPathInner}/fd/0`);
   await fsys.writeFile(`${taskPath}/ctl`, `bind ${termPathInner}/program ${taskPathInner}/fd/1`);
   await fsys.writeFile(`${taskPath}/ctl`, `bind ${termPathInner}/program ${taskPathInner}/fd/2`);
-  await fsys.writeFile(`${taskPath}/ctl`, `bind ${termPathInner}/winch ${taskPathInner}/winch`);
+  await fsys.writeFile(`${taskPath}/ctl`, "bind #task/self/term/winch winch");
   await fsys.writeFile(`${taskPath}/ctl`, "start");
   const writeEmitter = new vscode.EventEmitter();
   const dec = new TextDecoder();
@@ -4485,6 +4487,7 @@ async function createTerminal(fsys, config) {
   const readable = await fsys.openReadable(`${termPath}/data`);
   const writable = (await fsys.openWritable(`${termPath}/data`)).getWriter();
   let buffer = "";
+  let winch = "";
   return {
     onDidWrite: writeEmitter.event,
     open: () => {
@@ -4517,6 +4520,14 @@ async function createTerminal(fsys, config) {
       }
     },
     setDimensions: async (dimensions) => {
+      const size = `${dimensions.columns} ${dimensions.rows}`;
+      if (!dimensions.columns || !dimensions.rows || size === winch) return;
+      winch = size;
+      const stream = await fsys.openWritable(`${termPath}/winch`);
+      const writer = stream.getWriter();
+      await writer.write(enc.encode(`${size} 0 0
+`));
+      await writer.close();
     }
   };
 }
