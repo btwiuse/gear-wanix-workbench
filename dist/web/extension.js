@@ -4477,6 +4477,7 @@ async function createTerminal(fsys, config) {
   await fsys.writeFile(`${taskPath}/ctl`, `bind ${termPathInner}/program ${taskPathInner}/fd/0`);
   await fsys.writeFile(`${taskPath}/ctl`, `bind ${termPathInner}/program ${taskPathInner}/fd/1`);
   await fsys.writeFile(`${taskPath}/ctl`, `bind ${termPathInner}/program ${taskPathInner}/fd/2`);
+  await fsys.writeFile(`${taskPath}/ctl`, `bind ${termPathInner}/winch ${taskPathInner}/winch`);
   await fsys.writeFile(`${taskPath}/ctl`, "start");
   const writeEmitter = new vscode.EventEmitter();
   const dec = new TextDecoder();
