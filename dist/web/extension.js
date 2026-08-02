@@ -6,7 +6,11 @@ var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __commonJS = (cb, mod) => function __require() {
-  return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+  try {
+    return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+  } catch (e) {
+    throw mod = 0, e;
+  }
 };
 var __export = (target2, all) => {
   for (var name in all)
@@ -4437,6 +4441,11 @@ async function activate(context) {
       }
     }
   });
+  vscode.workspace.onDidSaveTextDocument((doc) => {
+    vscode.commands.executeCommand("__wanix.fileSaved", {
+      uri: doc.uri.toString()
+    });
+  });
   console.log("System extension activated");
 }
 async function createTerminal(fsys, config) {
@@ -4446,7 +4455,9 @@ async function createTerminal(fsys, config) {
   const taskID = (await fsys.readText(`${config.ns?.task}/new/${config.shell?.type || "auto"}`)).trim();
   const taskPath = [config.ns?.task, taskID].join("/");
   await fsys.writeFile(`${taskPath}/cmd`, config.shell?.cmd);
-  await fsys.writeFile(`${taskPath}/dir`, config.shell?.wd);
+  if (config.shell?.wd) {
+    await fsys.writeFile(`${taskPath}/dir`, config.shell.wd);
+  }
   const commonPath = (a, b, sep = "/") => {
     const as = a.split(sep);
     const bs = b.split(sep);
